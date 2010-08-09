@@ -6,8 +6,10 @@ class Php53osx <Formula
   homepage 'http://php.net'
   md5 '21ceeeb232813c10283a5ca1b4c87b48'
 
+  has_apache = false
   # DEPENDENCIES
   if ARGV.include? '--default-osx'
+    has_apache = true
     depends_on 'jpeg'
     depends_on 'libpng'
     depends_on 'libxml2'
@@ -25,6 +27,9 @@ class Php53osx <Formula
   if ARGV.include? '--with-fpm'
     depends_on 'libevent'
   end
+  if ARGV.include? '--with-apache'
+    has_apache = true
+  end
 
   def patches
     # Typical Mac OSX+PHP libiconv patch
@@ -40,7 +45,7 @@ class Php53osx <Formula
       ['--with-sqlite',       "Build with SQLite3 (PDO) support from homebrew"],
       ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X"],
       ['--with-fpm',          "Build with PHP-FPM"],
-      ['--without-apache',    "Do not build with the Apache SAPI (use with --default-osx)"]
+      ['--with-apache',       "Build with the Apache SAPI [supplied by --default-osx]"]
     ]
   end
 
@@ -60,9 +65,9 @@ class Php53osx <Formula
     Pass --with-mysql         to build with MySQL (PDO) support
     Pass --with-native-mysql  to build with native MySQL drivers [supplied by --default-osx]
     Pass --with-sqlite        to build with SQLite3 (PDO) support from homebrew
-    Pass --with-osx-sqlite    to build with SQLite3 (PDO) from OS X
+    Pass --with-osx-sqlite    to build with SQLite3 (PDO) from OS X [supplied by --default-osx]
     Pass --with-fpm           to build with PHP-FPM
-    Pass --without-apache     to NOT build the Apache SAPI (use with --default-osx to disable binding to default Apache install)
+    Pass --with-apache        to build the Apache SAPI [supplied by --default-osx]
     END_CAVEATS
   end
 
@@ -83,7 +88,7 @@ class Php53osx <Formula
       "--with-iconv-dir=/usr"
     ]
 
-    if (!ARGV.include? '--without-apache') && (ARGV.include? '--default-osx')
+    if has_apache
       puts "Building with Apache SAPI"
       configure_args.push("--with-apxs2=/usr/sbin/apxs", "--libexecdir=#{prefix}/libexec")
     end
@@ -92,11 +97,12 @@ class Php53osx <Formula
       puts "Building with MySQL (PDO) support"
       # Now for the DB stuff
       if (ARGV.include? '--with-mysql') && (!ARGV.include? '--with-native-mysql')
+        puts "Using homebrew MySQL (PDO) drivers"
         configure_args.push("--with-mysql=#{HOMEBREW_PREFIX}/lib/mysql",
         "--with-mysqli=#{HOMEBREW_PREFIX}/bin/mysql_config",
         "--with-pdo-mysql=#{HOMEBREW_PREFIX}/bin/mysql_config")
       else
-        puts "Using native MySQL drivers"
+        puts "Using native MySQL (PDO) drivers"
         configure_args.push("--with-mysql=mysqlnd",
         "--with-mysqli=mysqlnd",
         "--with-pdo-mysql=mysqlnd",
@@ -156,25 +162,6 @@ class Php53osx <Formula
     end
 
     system "./configure", *configure_args
-
-
-    #mkfile = File.open("Makefile")
-    #newmk  = File.new("Makefile.fix", "w")
-    #mkfile.each do |line|
-    #    if /^EXTRA_LIBS =(.*)$/ =~ line
-    #        newmk.print "EXTRA_LIBS =", $1, " -lresolv\n"
-    #    elsif /^MH_BUNDLE_FLAGS =(.*)$/ =~ line
-    #        newmk.print "MH_BUNDLE_FLAGS =", $1, " -lresolv\n"
-    #    elsif /\$\(CC\) \$\(MH_BUNDLE_FLAGS\)/ =~ line
-    #        newmk.print "\t", '$(CC) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS) $(LDFLAGS) $(EXTRA_LDFLAGS) $(PHP_GLOBAL_OBJS:.lo=.o) $(PHP_SAPI_OBJS:.lo=.o) $(PHP_FRAMEWORKS) $(EXTRA_LIBS) $(ZEND_EXTRA_LIBS) $(MH_BUNDLE_FLAGS) -o $@ && cp $@ libs/libphp$(PHP_MAJOR_VERSION).so', "\n"
-    #    elsif /^INSTALL_IT =(.*)$/ =~ line
-    #        newmk.print "INSTALL_IT = $(mkinstalldirs) '#{prefix}/libexec/apache2' && $(mkinstalldirs) '$(INSTALL_ROOT)/private/etc/apache2' && /usr/sbin/apxs -S LIBEXECDIR='#{prefix}/libexec/apache2' -S SYSCONFDIR='$(INSTALL_ROOT)/private/etc/apache2' -i -a -n php5 libs/libphp5.so", "\n"
-    #    else
-    #        newmk.print line
-    #    end
-    #end
-    #newmk.close
-    #system "cp Makefile.fix Makefile"
     system "make"
     system "make install"
     system "mkdir -p #{prefix}/etc"
@@ -183,7 +170,7 @@ class Php53osx <Formula
       system "cp ./sapi/fpm/php-fpm.conf #{prefix}/etc/php-fpm.ini"
     end
     
-    if !ARGV.include? '--without-apache'
+    if has_apache
       puts "Apache module installed at #{prefix}/libexec/apache2/libphp.so"
       puts "You can symlink to it in /usr/libexec/apache2, edit httpd.conf and restart your webserver"
     end
