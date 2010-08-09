@@ -6,10 +6,10 @@ class Php53osx <Formula
   homepage 'http://php.net'
   md5 '21ceeeb232813c10283a5ca1b4c87b48'
 
-  has_apache = false
+  @@has_apache = false
   # DEPENDENCIES
   if ARGV.include? '--default-osx'
-    has_apache = true
+    @@has_apache = true
     depends_on 'jpeg'
     depends_on 'libpng'
     depends_on 'libxml2'
@@ -28,7 +28,10 @@ class Php53osx <Formula
     depends_on 'libevent'
   end
   if ARGV.include? '--with-apache'
-    has_apache = true
+    @@has_apache = true
+  end
+  if ARGV.include? '--without-apache'
+    @@has_apache = false
   end
 
   def patches
@@ -45,7 +48,8 @@ class Php53osx <Formula
       ['--with-sqlite',       "Build with SQLite3 (PDO) support from homebrew"],
       ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X"],
       ['--with-fpm',          "Build with PHP-FPM"],
-      ['--with-apache',       "Build with the Apache SAPI [supplied by --default-osx]"]
+      ['--with-apache',       "Build with the Apache SAPI [supplied by --default-osx]"],
+      ['--without-apache',    "Ignore building the Apache SAPI [only useful with --default-osx]"]
     ]
   end
 
@@ -68,6 +72,7 @@ class Php53osx <Formula
     Pass --with-osx-sqlite    to build with SQLite3 (PDO) from OS X [supplied by --default-osx]
     Pass --with-fpm           to build with PHP-FPM
     Pass --with-apache        to build the Apache SAPI [supplied by --default-osx]
+    Pass --without-apache     to ignore building the Apache SAPI [only useful with --default-osx]
     END_CAVEATS
   end
 
@@ -88,7 +93,7 @@ class Php53osx <Formula
       "--with-iconv-dir=/usr"
     ]
 
-    if has_apache
+    if @@has_apache
       puts "Building with Apache SAPI"
       configure_args.push("--with-apxs2=/usr/sbin/apxs", "--libexecdir=#{prefix}/libexec")
     end
@@ -170,7 +175,7 @@ class Php53osx <Formula
       system "cp ./sapi/fpm/php-fpm.conf #{prefix}/etc/php-fpm.ini"
     end
     
-    if has_apache
+    if @@has_apache
       puts "Apache module installed at #{prefix}/libexec/apache2/libphp.so"
       puts "You can symlink to it in /usr/libexec/apache2, edit httpd.conf and restart your webserver"
     end
