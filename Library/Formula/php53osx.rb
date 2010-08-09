@@ -7,11 +7,9 @@ class Php53osx <Formula
   md5 '21ceeeb232813c10283a5ca1b4c87b48'
 
   # DEPENDENCIES
-  depends_on 'libiconv'
   if ARGV.include? '--default-osx'
     depends_on 'jpeg'
     depends_on 'libpng'
-    depends_on 'freetype'
     depends_on 'libxml2'
     depends_on 'sqlite'
     depends_on 'pcre'
@@ -28,6 +26,12 @@ class Php53osx <Formula
     depends_on 'libevent'
   end
 
+  def patches
+    # Typical Mac OSX+PHP libiconv patch
+    # Added the Mac OSX mysqli non-native bug fix
+    DATA
+  end
+  
   def options
     [
       ['--default-osx',       "Build like the default OS X PHP install (minus ODBC, Phar)"],
@@ -71,11 +75,11 @@ class Php53osx <Formula
       "--disable-debug",
       "--disable-dependency-tracking",
       "--with-config-file-path=#{prefix}/etc",
-      "--sysconfdir=/private/etc",
+      "--sysconfdir=#{prefix}/etc",
       "--without-pear",
       "--enable-cgi",
       "--mandir=#{man}",
-      "--with-iconv-dir=#{HOMEBREW_PREFIX}"
+      "--with-iconv-dir=/usr"
     ]
 
     if !ARGV.include? '--without-apache'
@@ -86,8 +90,8 @@ class Php53osx <Formula
     if (ARGV.include? '--default-osx') || (ARGV.include? '--with-mysql')
       puts "Building with MySQL (PDO) support"
       # Now for the DB stuff
-      if (!ARGV.include? '--with-native-mysql')
-        configure_args.push("--with-mysql=#{lib}/mysql",
+      if (ARGV.include? '--with-mysql') && (!ARGV.include? '--with-native-mysql')
+        configure_args.push("--with-mysql=#{HOMEBREW_PREFIX}/lib/mysql",
         "--with-mysqli=#{HOMEBREW_PREFIX}/bin/mysql_config",
         "--with-pdo-mysql=#{HOMEBREW_PREFIX}/bin/mysql_config")
       else
@@ -113,7 +117,7 @@ class Php53osx <Formula
       configure_args.push("--with-gd",
       "--with-jpeg-dir=#{HOMEBREW_PREFIX}",
       "--with-png-dir=#{HOMEBREW_PREFIX}/Cellar/libpng/#{versions_of("libpng").first}",
-      "--with-freetype-dir=#{HOMEBREW_PREFIX}",
+      "--with-freetype-dir=/usr/X11",
       "--enable-gd-native-ttf")
 
       # Misc default stuff
@@ -170,7 +174,10 @@ class Php53osx <Formula
     system "make install"
     system "mkdir -p #{prefix}/etc"
     system "cp ./php.ini-production #{prefix}/etc/php.ini"
-
+    if ARGV.include? '--with-fpm'
+      system "cp ./sapi/fpm/php-fpm.conf #{prefix}/etc/php-fpm.ini"
+    end
+    
     if !ARGV.include? '--without-apache'
       puts "Apache module installed at #{prefix}/libexec/apache2/libphp.so"
       puts "You can symlink to it in /usr/libexec/apache2, edit httpd.conf and restart your webserver"
@@ -180,3 +187,31 @@ class Php53osx <Formula
     # system "make install"
   end
 end
+
+__END__
+diff --git a/ext/iconv/iconv.c b/ext/iconv/iconv.c
+index 246e1d5..bc90239 100644
+--- a/ext/iconv/iconv.c
++++ b/ext/iconv/iconv.c
+@@ -183,7 +183,7 @@ static PHP_GINIT_FUNCTION(iconv)
+ /* }}} */
+ 
+ #if defined(HAVE_LIBICONV) && defined(ICONV_ALIASED_LIBICONV)
+-#define iconv libiconv
++#define iconv iconv
+ #endif
+ 
+ /* {{{ typedef enum php_iconv_enc_scheme_t */
+
+diff --git a/ext/mysqli/php_mysqli_structs.h b/ext/mysqli/php_mysqli_structs.h
+index 4a7b40c..80b3ed8 100644
+--- a/ext/mysqli/php_mysqli_structs.h
++++ b/ext/mysqli/php_mysqli_structs.h
+@@ -54,6 +54,7 @@
+#define WE_HAD_MBSTATE_T
+#endif
+
++#define HAVE_ULONG 1
+#include <my_global.h>
+
+#if !defined(HAVE_MBRLEN) && defined(WE_HAD_MBRLEN)
