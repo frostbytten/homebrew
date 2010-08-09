@@ -58,11 +58,14 @@ class Php53osx <Formula
     This formula has installed libxml2 and libiconv to bypass some errors included
     within the default OS X libraries.
     
-    If you would like to customize your php.ini please edit:
-    #{HOMEBREW_PREFIX}/etc/php.ini
     
-    If you used --with-fpm please edit:
-    #{HOMEBREW_PREFIX}/etc/php-fpm.ini
+    If you would like to customize your php.ini please edit:
+    #{HOMEBREW_PREFIX}/lib/php.ini
+    NOTE: You will want to set date.timezone setting to your timezone.
+    http://www.php.net/manual/en/timezones.php
+    
+    If you used --with-fpm you need to edit:
+    #{HOMEBREW_PREFIX}/etc/php-fpm.conf
     
     Switches:
     Pass --default-osx        to build like the default OS X install of PHP (including binding to default Apache install)
@@ -85,7 +88,7 @@ class Php53osx <Formula
       "--prefix=#{prefix}",
       "--disable-debug",
       "--disable-dependency-tracking",
-      "--with-config-file-path=#{prefix}/etc",
+      "--with-config-file-path=#{HOMEBREW_PREFIX}/etc",
       "--sysconfdir=#{prefix}/etc",
       "--without-pear",
       "--enable-cgi",
@@ -99,15 +102,14 @@ class Php53osx <Formula
     end
 
     if (ARGV.include? '--default-osx') || (ARGV.include? '--with-mysql')
-      puts "Building with MySQL (PDO) support"
       # Now for the DB stuff
       if (ARGV.include? '--with-mysql') && (!ARGV.include? '--with-native-mysql')
-        puts "Using homebrew MySQL (PDO) drivers"
+        puts "Using MySQL (PDO) drivers [homebrew drivers]"
         configure_args.push("--with-mysql=#{HOMEBREW_PREFIX}/lib/mysql",
         "--with-mysqli=#{HOMEBREW_PREFIX}/bin/mysql_config",
         "--with-pdo-mysql=#{HOMEBREW_PREFIX}/bin/mysql_config")
       else
-        puts "Using native MySQL (PDO) drivers"
+        puts "Using MySQL (PDO) drivers [native drivers]"
         configure_args.push("--with-mysql=mysqlnd",
         "--with-mysqli=mysqlnd",
         "--with-pdo-mysql=mysqlnd",
@@ -116,12 +118,14 @@ class Php53osx <Formula
     end
 
     if (ARGV.include? '--default-osx') || (ARGV.include? '--with-osx-sqlite')
-      puts "Building with SQLite3 (PDO) support [OS X libraries]"
-      configure_args.push("--with-pdo-sqlite=/usr")
+      if (!ARGV.include? '--with-sqlite')
+        puts "Building with SQLite3 (PDO) support [OS X libraries]"
+        configure_args.push("--with-pdo-sqlite=/usr")
+      end
     end
     
     if (ARGV.include? '--with-sqlite')
-      puts "Building with SQLite3 (PDO support [homebrew libraries])"
+      puts "Building with SQLite3 (PDO) support [homebrew libraries])"
       configure_args.push("--with-pdo-sqlite=#{HOMEBREW_PREFIX}")
     end
 
@@ -167,21 +171,27 @@ class Php53osx <Formula
     end
 
     system "./configure", *configure_args
+    # Taken from http://github.com/ampt/homebrew/blob/php/Library/Formula/php.rb
+    if @@has_apache
+      inreplace "Makefile",
+            "INSTALL_IT = $(mkinstalldirs) '$(INSTALL_ROOT)/usr/libexec/apache2' && $(mkinstalldirs) '$(INSTALL_ROOT)/private/etc/apache2' && /usr/sbin/apxs -S LIBEXECDIR='$(INSTALL_ROOT)/usr/libexec/apache2' -S SYSCONFDIR='$(INSTALL_ROOT)/private/etc/apache2' -i -a -n php5 libs/libphp5.so",
+            "INSTALL_IT = $(mkinstalldirs) '#{prefix}/libexec/apache2' && $(mkinstalldirs) '$(INSTALL_ROOT)/private/etc/apache2' && /usr/sbin/apxs -S LIBEXECDIR='#{prefix}/libexec/apache2' -S SYSCONFDIR='$(INSTALL_ROOT)/private/etc/apache2' -i -a -n php5 libs/libphp5.so"
+    end
+    
     system "make"
     system "make install"
     system "mkdir -p #{prefix}/etc"
-    system "cp ./php.ini-production #{prefix}/etc/php.ini"
+    system "cp ./php.ini-production #{prefix}/lib/php.ini"
     if ARGV.include? '--with-fpm'
-      system "cp ./sapi/fpm/php-fpm.conf #{prefix}/etc/php-fpm.ini"
+      system "cp ./sapi/fpm/php-fpm.conf #{prefix}/etc/php-fpm.conf"
+      system "mkdir -p #{prefix}/var/log"
+      system "touch #{prefix}/var/log/php-fpm.log"
     end
     
     if @@has_apache
-      puts "Apache module installed at #{prefix}/libexec/apache2/libphp.so"
-      puts "You can symlink to it in /usr/libexec/apache2, edit httpd.conf and restart your webserver"
+      puts "To enable PHP in Apache add the following to httpd.conf and restart Apache:"
+      puts "  LoadModule php5_module    #{prefix}/libexec/apache2/libphp5.so"
     end
-    # system "./configure", "--prefix=#{prefix}", "--disable-debug", "--disable-dependency-tracking"
-    # system "cmake . #{std_cmake_parameters}"
-    # system "make install"
   end
 end
 
