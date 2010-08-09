@@ -40,7 +40,7 @@ class Php53osx <Formula
       ['--with-sqlite',       "Build with SQLite3 (PDO) support from homebrew"],
       ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X"],
       ['--with-fpm',          "Build with PHP-FPM"],
-      ['--without-apache',    "Do not build with the Apache SAPI"]
+      ['--without-apache',    "Do not build with the Apache SAPI (use with --default-osx)"]
     ]
   end
 
@@ -56,12 +56,13 @@ class Php53osx <Formula
     #{HOMEBREW_PREFIX}/etc/php-fpm.ini
     
     Switches:
-    Pass --default-osx        to build like the default OS X install of PHP
+    Pass --default-osx        to build like the default OS X install of PHP (including binding to default Apache install)
     Pass --with-mysql         to build with MySQL (PDO) support
-    Pass --with-native-mysql  to build with default MySQL Snow Leopard drivers
-    Pass --with-sqlite        to build with SQLite3 (PDO) support
+    Pass --with-native-mysql  to build with native MySQL drivers [supplied by --default-osx]
+    Pass --with-sqlite        to build with SQLite3 (PDO) support from homebrew
+    Pass --with-osx-sqlite    to build with SQLite3 (PDO) from OS X
     Pass --with-fpm           to build with PHP-FPM
-    Pass --without-apache     to NOT build the Apache SAPI
+    Pass --without-apache     to NOT build the Apache SAPI (use with --default-osx to disable binding to default Apache install)
     END_CAVEATS
   end
 
@@ -82,7 +83,7 @@ class Php53osx <Formula
       "--with-iconv-dir=/usr"
     ]
 
-    if !ARGV.include? '--without-apache'
+    if (!ARGV.include? '--without-apache') && (ARGV.include? '--default-osx')
       puts "Building with Apache SAPI"
       configure_args.push("--with-apxs2=/usr/sbin/apxs", "--libexecdir=#{prefix}/libexec")
     end
@@ -98,7 +99,8 @@ class Php53osx <Formula
         puts "Using native MySQL drivers"
         configure_args.push("--with-mysql=mysqlnd",
         "--with-mysqli=mysqlnd",
-        "--with-pdo-mysql=mysqlnd")       
+        "--with-pdo-mysql=mysqlnd",
+        "--with-mysql-sock=/tmp/mysql.sock")       
       end
     end
 
@@ -123,13 +125,15 @@ class Php53osx <Formula
       # Misc default stuff
       configure_args.push("--with-libxml-dir=#{HOMEBREW_PREFIX}",
       "--with-openssl=/usr",
+      "--with-kerberos=/usr",
       "--with-ldap=/usr",
+      "--with-ldap-sasl=/usr",
       "--with-pcre-regex",
-      "--with-zlib",
+      "--with-zlib=/usr",
       "--enable-bcmath",
       "--with-bz2",
       "--enable-calendar",
-      "--with-curl",
+      "--with-curl=/usr",
       "--enable-exif",
       "--enable-ftp",
       "--enable-mbstring",
@@ -141,7 +145,8 @@ class Php53osx <Formula
       "--enable-sysvshm",
       "--with-xmlrpc",
       "--with-xsl",
-      "--enable-zip")
+      "--enable-zip",
+      "--with-iodbc=/usr")
     end
 
     if ARGV.include? '--with-fpm'
@@ -208,10 +213,11 @@ index 4a7b40c..80b3ed8 100644
 --- a/ext/mysqli/php_mysqli_structs.h
 +++ b/ext/mysqli/php_mysqli_structs.h
 @@ -54,6 +54,7 @@
-#define WE_HAD_MBSTATE_T
-#endif
-
+ #define WE_HAD_MBSTATE_T
+ #endif
+ 
 +#define HAVE_ULONG 1
-#include <my_global.h>
+ #include <my_global.h>
+ 
+ #if !defined(HAVE_MBRLEN) && defined(WE_HAD_MBRLEN)
 
-#if !defined(HAVE_MBRLEN) && defined(WE_HAD_MBRLEN)
