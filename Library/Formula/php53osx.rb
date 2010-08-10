@@ -60,7 +60,7 @@ class Php53osx <Formula
     
     
     If you would like to customize your php.ini please edit:
-    #{HOMEBREW_PREFIX}/lib/php.ini
+    #{HOMEBREW_PREFIX}/etc/php.ini
     NOTE: You will want to set date.timezone setting to your timezone.
     http://www.php.net/manual/en/timezones.php
     
@@ -181,7 +181,7 @@ class Php53osx <Formula
     system "make"
     system "make install"
     system "mkdir -p #{prefix}/etc"
-    system "cp ./php.ini-production #{prefix}/lib/php.ini"
+    system "cp ./php.ini-production #{prefix}/etc/php.ini"
     if ARGV.include? '--with-fpm'
       system "cp ./sapi/fpm/php-fpm.conf #{prefix}/etc/php-fpm.conf"
       system "mkdir -p #{prefix}/var/log"
