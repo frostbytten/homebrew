@@ -46,7 +46,7 @@ class Php53osx <Formula
       ['--with-mysql',        "Build with MySQL (PDO) support from homebrew"],
       ['--with-native-mysql', "Build with native MySQL drivers [supplied by --default-osx]"],
       ['--with-sqlite',       "Build with SQLite3 (PDO) support from homebrew"],
-      ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X"],
+      ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X [supplied by --default-osx]"],
       ['--with-fpm',          "Build with PHP-FPM"],
       ['--with-apache',       "Build with the Apache SAPI [supplied by --default-osx]"],
       ['--without-apache',    "Ignore building the Apache SAPI [only useful with --default-osx]"]
