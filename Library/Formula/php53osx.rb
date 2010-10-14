@@ -23,6 +23,9 @@ class Php53osx <Formula
     if ARGV.include? '--with-sqlite'
       depends_on 'sqlite'
     end
+    if ARGV.include? '--with-pgsql'
+      depends_on 'postgresql'
+    end
   end
   if ARGV.include? '--with-fpm'
     depends_on 'libevent'
@@ -46,6 +49,7 @@ class Php53osx <Formula
       ['--with-mysql',        "Build with MySQL (PDO) support from homebrew"],
       ['--with-native-mysql', "Build with native MySQL drivers [supplied by --default-osx]"],
       ['--with-sqlite',       "Build with SQLite3 (PDO) support from homebrew"],
+      ['--with-pgsql',        "Build with PostgreSQL support from homebrew"],
       ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X [supplied by --default-osx]"],
       ['--with-fpm',          "Build with PHP-FPM"],
       ['--with-apache',       "Build with the Apache SAPI [supplied by --default-osx]"],
@@ -73,6 +77,7 @@ class Php53osx <Formula
     Pass --with-native-mysql  to build with native MySQL drivers [supplied by --default-osx]
     Pass --with-sqlite        to build with SQLite3 (PDO) support from homebrew
     Pass --with-osx-sqlite    to build with SQLite3 (PDO) from OS X [supplied by --default-osx]
+    Pass --with-pgsql		  to build with PostgreSQL support
     Pass --with-fpm           to build with PHP-FPM
     Pass --with-apache        to build the Apache SAPI [supplied by --default-osx]
     Pass --without-apache     to ignore building the Apache SAPI [only useful with --default-osx]
@@ -127,6 +132,11 @@ class Php53osx <Formula
     if (ARGV.include? '--with-sqlite')
       puts "Building with SQLite3 (PDO) support [homebrew libraries])"
       configure_args.push("--with-pdo-sqlite=#{HOMEBREW_PREFIX}")
+    end
+    
+     if (ARGV.include? '--with-pgsql')
+      puts "Building with PostgreSQL support [homebrew libraries])"
+      configure_args.push("--with-pgsql=#{HOMEBREW_PREFIX}")
     end
 
     if ARGV.include? '--default-osx'  
