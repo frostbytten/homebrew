@@ -77,7 +77,7 @@ class Php53osx <Formula
     Pass --with-native-mysql  to build with native MySQL drivers [supplied by --default-osx]
     Pass --with-sqlite        to build with SQLite3 (PDO) support from homebrew
     Pass --with-osx-sqlite    to build with SQLite3 (PDO) from OS X [supplied by --default-osx]
-    Pass --with-pgsql		  to build with PostgreSQL support
+    Pass --with-pgsql		      to build with PostgreSQL support
     Pass --with-fpm           to build with PHP-FPM
     Pass --with-apache        to build the Apache SAPI [supplied by --default-osx]
     Pass --without-apache     to ignore building the Apache SAPI [only useful with --default-osx]
