@@ -12,11 +12,6 @@ class Riak <Formula
   skip_clean 'libexec/data/ring'
 
   depends_on 'erlang'
-  
-  def patches
-    # Having issues with the integer_to_list/2 BIF
-    DATA
-  end
 
   def install
     ENV.deparallelize

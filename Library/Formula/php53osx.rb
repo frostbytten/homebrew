@@ -42,7 +42,7 @@ class Php53osx <Formula
     # Added the Mac OSX mysqli non-native bug fix
     DATA
   end
-  
+
   def options
     [
       ['--default-osx',       "Build like the default OS X PHP install (minus ODBC, Phar)"],
@@ -61,16 +61,16 @@ class Php53osx <Formula
     <<-END_CAVEATS
     This formula has installed libxml2 and libiconv to bypass some errors included
     within the default OS X libraries.
-    
-    
+
+
     If you would like to customize your php.ini please edit:
     #{HOMEBREW_PREFIX}/etc/php.ini
     NOTE: You will want to set date.timezone setting to your timezone.
     http://www.php.net/manual/en/timezones.php
-    
+
     If you used --with-fpm you need to edit:
     #{HOMEBREW_PREFIX}/etc/php-fpm.conf
-    
+
     Switches:
     Pass --default-osx        to build like the default OS X install of PHP (including binding to default Apache install)
     Pass --with-mysql         to build with MySQL (PDO) support
@@ -118,7 +118,7 @@ class Php53osx <Formula
         configure_args.push("--with-mysql=mysqlnd",
         "--with-mysqli=mysqlnd",
         "--with-pdo-mysql=mysqlnd",
-        "--with-mysql-sock=/tmp/mysql.sock")       
+        "--with-mysql-sock=/tmp/mysql.sock")
       end
     end
 
@@ -128,18 +128,18 @@ class Php53osx <Formula
         configure_args.push("--with-pdo-sqlite=/usr")
       end
     end
-    
+
     if (ARGV.include? '--with-sqlite')
       puts "Building with SQLite3 (PDO) support [homebrew libraries])"
       configure_args.push("--with-pdo-sqlite=#{HOMEBREW_PREFIX}")
     end
-    
+
      if (ARGV.include? '--with-pgsql')
       puts "Building with PostgreSQL support [homebrew libraries])"
       configure_args.push("--with-pgsql=#{HOMEBREW_PREFIX}")
     end
 
-    if ARGV.include? '--default-osx'  
+    if ARGV.include? '--default-osx'
       # Now for the GD stuff
       configure_args.push("--with-gd",
       "--with-jpeg-dir=#{HOMEBREW_PREFIX}",
@@ -176,7 +176,7 @@ class Php53osx <Formula
 
     if ARGV.include? '--with-fpm'
       puts "Building PHP-FPM"
-      configure_args.push("--with-libevent-dir=#{HOMEBREW_PREFIX}", 
+      configure_args.push("--with-libevent-dir=#{HOMEBREW_PREFIX}",
       "--enable-fpm")
     end
 
@@ -187,7 +187,7 @@ class Php53osx <Formula
             "INSTALL_IT = $(mkinstalldirs) '$(INSTALL_ROOT)/usr/libexec/apache2' && $(mkinstalldirs) '$(INSTALL_ROOT)/private/etc/apache2' && /usr/sbin/apxs -S LIBEXECDIR='$(INSTALL_ROOT)/usr/libexec/apache2' -S SYSCONFDIR='$(INSTALL_ROOT)/private/etc/apache2' -i -a -n php5 libs/libphp5.so",
             "INSTALL_IT = $(mkinstalldirs) '#{prefix}/libexec/apache2' && $(mkinstalldirs) '$(INSTALL_ROOT)/private/etc/apache2' && /usr/sbin/apxs -S LIBEXECDIR='#{prefix}/libexec/apache2' -S SYSCONFDIR='$(INSTALL_ROOT)/private/etc/apache2' -i -a -n php5 libs/libphp5.so"
     end
-    
+
     system "make"
     system "make install"
     system "mkdir -p #{prefix}/etc"
@@ -197,14 +197,13 @@ class Php53osx <Formula
       system "mkdir -p #{prefix}/var/log"
       system "touch #{prefix}/var/log/php-fpm.log"
     end
-    
+
     if @@has_apache
       puts "To enable PHP in Apache add the following to httpd.conf and restart Apache:"
       puts "  LoadModule php5_module    #{prefix}/libexec/apache2/libphp5.so"
     end
   end
 end
-
 __END__
 diff --git a/ext/iconv/iconv.c b/ext/iconv/iconv.c
 index 246e1d5..bc90239 100644
@@ -212,12 +211,12 @@ index 246e1d5..bc90239 100644
 +++ b/ext/iconv/iconv.c
 @@ -183,7 +183,7 @@ static PHP_GINIT_FUNCTION(iconv)
  /* }}} */
- 
+
  #if defined(HAVE_LIBICONV) && defined(ICONV_ALIASED_LIBICONV)
 -#define iconv libiconv
 +#define iconv iconv
  #endif
- 
+
  /* {{{ typedef enum php_iconv_enc_scheme_t */
 
 diff --git a/ext/mysqli/php_mysqli_structs.h b/ext/mysqli/php_mysqli_structs.h
@@ -227,9 +226,8 @@ index 4a7b40c..80b3ed8 100644
 @@ -54,6 +54,7 @@
  #define WE_HAD_MBSTATE_T
  #endif
- 
+
 +#define HAVE_ULONG 1
  #include <my_global.h>
- 
- #if !defined(HAVE_MBRLEN) && defined(WE_HAD_MBRLEN)
 
+ #if !defined(HAVE_MBRLEN) && defined(WE_HAD_MBRLEN)

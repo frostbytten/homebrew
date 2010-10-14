@@ -10,7 +10,7 @@ class ErlangR13 <Formula
   url "git://github.com/erlang/otp.git", :tag => "OTP_R13B04"
   version 'R13B04'
   homepage 'http://www.erlang.org'
-  
+
   # We can't strip the beam executables or any plugins, there isn't really
   # anything else worth stripping and it takes a really, long time to run
   # `file` over everything in lib because there is almost 4000 files (and
@@ -30,7 +30,7 @@ class ErlangR13 <Formula
     fails_with_llvm "See http://github.com/mxcl/homebrew/issues/issue/120", :build => 2326
 
     system "./otp_build autoconf" if File.exist? "otp_build"
-    
+
     args = ["--disable-debug",
             "--prefix=#{prefix}",
             "--enable-kernel-poll",
