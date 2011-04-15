@@ -1,15 +1,18 @@
 require 'formula'
 
 class Php53osx <Formula
-  url 'http://us.php.net/get/php-5.3.3.tar.bz2/from/www.php.net/mirror'
-  version '5.3.3'
+  url 'http://us.php.net/get/php-5.3.6.tar.bz2/from/www.php.net/mirror'
+  version '5.3.6'
   homepage 'http://php.net'
-  md5 '21ceeeb232813c10283a5ca1b4c87b48'
+  md5 '2286f5a82a6e8397955a0025c1c2ad98'
 
   @@has_apache = false
+  @@has_pear   = false
+  
   # DEPENDENCIES
   if ARGV.include? '--default-osx'
     @@has_apache = true
+    @@has_pear   = true
     depends_on 'jpeg'
     depends_on 'libpng'
     depends_on 'libxml2'
@@ -36,7 +39,13 @@ class Php53osx <Formula
   if ARGV.include? '--without-apache'
     @@has_apache = false
   end
-
+  if ARGV.include? '--without-pear'
+    @@has_pear = false
+  end
+  if ARGV.include? '--with-pear'
+    @@has_pear = true
+  end
+  
   def patches
     # Typical Mac OSX+PHP libiconv patch
     # Added the Mac OSX mysqli non-native bug fix
@@ -53,7 +62,9 @@ class Php53osx <Formula
       ['--with-osx-sqlite',   "Build with SQLite3 (PDO) from OS X [supplied by --default-osx]"],
       ['--with-fpm',          "Build with PHP-FPM"],
       ['--with-apache',       "Build with the Apache SAPI [supplied by --default-osx]"],
-      ['--without-apache',    "Ignore building the Apache SAPI [only useful with --default-osx]"]
+      ['--without-apache',    "Ignore building the Apache SAPI [only useful with --default-osx]"],
+      ['--with-pear',         "Build with PEAR support [supplied by --default-osx]"],
+      ['--without-pear',      "Ignore building PEAR support [only useful with --default-osx]"]
     ]
   end
 
@@ -81,6 +92,8 @@ class Php53osx <Formula
     Pass --with-fpm           to build with PHP-FPM
     Pass --with-apache        to build the Apache SAPI [supplied by --default-osx]
     Pass --without-apache     to ignore building the Apache SAPI [only useful with --default-osx]
+    Pass --with-pear          to build with PEAR support
+    Pass --without-pear       to ignore building with PEAR support [only useful with --default-osx]
     END_CAVEATS
   end
 
@@ -95,7 +108,6 @@ class Php53osx <Formula
       "--disable-dependency-tracking",
       "--with-config-file-path=#{HOMEBREW_PREFIX}/etc",
       "--sysconfdir=#{prefix}/etc",
-      "--without-pear",
       "--enable-cgi",
       "--mandir=#{man}",
       "--with-iconv-dir=/usr"
@@ -105,7 +117,14 @@ class Php53osx <Formula
       puts "Building with Apache SAPI"
       configure_args.push("--with-apxs2=/usr/sbin/apxs", "--libexecdir=#{prefix}/libexec")
     end
-
+    
+    if @@has_pear
+      puts "Building with PEAR support"
+      configure_args.push('--with-pear')
+    else
+      configure_args.push('--without-pear')
+    end
+    
     if (ARGV.include? '--default-osx') || (ARGV.include? '--with-mysql')
       # Now for the DB stuff
       if (ARGV.include? '--with-mysql') && (!ARGV.include? '--with-native-mysql')
